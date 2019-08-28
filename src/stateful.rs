@@ -300,11 +300,11 @@ impl<S: Scope, V: ExchangeData> Stateful<S, V> for Stream<S, V> {
                                 // actually contains data. Also, we must be the current owner of the bin.
                                 if (*old % peers == index) && (old != new) {
                                     // Capture bin's values as a stream of data
-                                    let mut state = states.bins[bin].take().expect("Instructed to move bin but it is None");
+                                    let state = states.bins[bin].take().expect("Instructed to move bin but it is None");
                                     let Bin { data, notificator } = state;
                                     session.give((*new, StateProtocol::Prepare(BinId(bin))));
                                     let chunk: Vec<_> = data.into_iter().collect();
-                                    println!("migration\t{}\t{}\t{}\t{}", bin, old, new, chunk.len());
+                                    println!("migration@time={:?}\tbin={}\told={}\tnew={}\tchunk.len()={}", *time.time(), bin, old, new, chunk.len());
                                     session.give((*new, StateProtocol::State(BinId(bin), chunk)));
                                     session.give_iterator(notificator.pending().map(|(t, d)| (*new, StateProtocol::Pending(BinId(bin), t, d))));
                                 }

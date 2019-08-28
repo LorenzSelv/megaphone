@@ -154,6 +154,8 @@ impl<G, D1> StatefulOperator<G, D1> for Stream<G, D1>
         let mut not_drain = Vec::new();
         let mut bin_drain = Vec::new();
 
+        let index = self.scope().index();
+
         // TODO: Should probably be written in terms of `stateful_unary_input`
         builder.build(move |_capability| {
             move |frontiers| {
@@ -169,12 +171,16 @@ impl<G, D1> StatefulOperator<G, D1> for Stream<G, D1>
                     let mut data_buffer = vec![];
                     data.swap(&mut data_buffer);
                     let cap = time.retain();
+                    println!("[stateful_unary@input.next] setup notification for time {:?} with keys {:?}", *cap.time(), data_buffer.iter().map(|x| x.1).collect::<Vec<_>>());
                     notificator.notify_at_data(&cap, cap.time().clone(), data_buffer);
                 }
 
                 if let Some(cap) = notificator.drain(&[&frontiers[0], &frontiers[1]], &mut not_drain) {
+                    println!("[stateful_unary@notificatior.drain] draining");
                     for (time, mut keyed_data) in not_drain.drain(..) {
+                        println!("\ttime is {:?}", time);
                         for (_, key_id, d) in keyed_data.drain(..) {
+                            println!("\t\t[W{}] operator:184 states.get({:?})", index, key_id);
                             states.get(key_id).notificator.notify_at_data(&cap, time.clone(), d);
                         }
                     }
